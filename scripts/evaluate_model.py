@@ -3,7 +3,7 @@ import os
 import random
 
 
-os.chdir("C:/Users/kuwah/Documents/Academics/U of T/CSC2542 Knowledge Representation/Final Project")
+os.chdir("/w/339/bkuwahara/csc2542")
 
 with open("./data/task.json") as data_file:
     data = json.load(data_file)
