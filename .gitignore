@@ -1,3 +1,5 @@
+shells
 scripts/offload
 venv
+results
 *.save
