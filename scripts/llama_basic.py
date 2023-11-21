@@ -34,9 +34,9 @@ if __name__ == "__main__":
 
 	q = questions[0]
 	query = q["input"]
-	prompt = prefix + query + "\nYour answer:"
-	print(prompt)
+	prompt = prefix + query + "\nYour answer: "
+	#print(prompt)
 	input = tokenizer(prompt, return_tensors="pt").to("cuda")
 
-	generate_ids = model.generate(**input, max_new_tokens=25)
+	generate_ids = model.generate(**input, max_new_tokens=10)
 	print("Reasoning prompt output: " + tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0])
