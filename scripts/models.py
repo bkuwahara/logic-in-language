@@ -1,17 +1,17 @@
 import torch
 import random
 from transformers import LlamaForCausalLM, LlamaTokenizer
+from epistemic_logic import KnowledgeBase
 
-llama_path = "/w/339/bkuwahara/llama_model/"
+llama_path = "meta-llama"
 
 
 class LlamaBasic:
-	def __init__(self, size, local=True):
+	def __init__(self, size):
 		
-		load_from = f"{llama_path}/{size}" if local else f"meta-llama/Llama-2-{size}-chat-hf"
-		kwargs = dict() if local else {"device_map" : "auto", "offload_folder": "offload", "torch_dtype" : torch.float16}
-		tokenizer = LlamaTokenizer.from_pretrained(load_from, device_map="auto" if local else None)
-		model = LlamaForCausalLM.from_pretrained(load_from, **kwargs)
+		load_from = f"{llama_path}/Llama-2-{size}"
+		tokenizer = LlamaTokenizer.from_pretrained(load_from)
+		model = LlamaForCausalLM.from_pretrained(load_from)
 		self.model = model
 		self.tokenizer = tokenizer
 
@@ -23,36 +23,24 @@ class LlamaBasic:
 
 
 class LlamaLogical:
+	conversion_prompt = "!!!TO DO!!!"
+
 	def __init__(self, size):		
-		load_from = f"{llama_path}/{size}" if local else f"meta-llama/Llama-2-{size}-chat-hf"
-		kwargs = dict() if local else {"device_map" : "auto", "offload_folder": "offload", "torch_dtype" : torch.float16}
-		tokenizer = LlamaTokenizer.from_pretrained(load_from, device_map="auto" if local else None)
+		load_from = f"{llama_path}/Llama-2-{size}"
+		tokenizer = LlamaTokenizer.from_pretrained(load_from)
 		model = LlamaForCausalLM.from_pretrained(load_from, **kwargs)
 		self.model = model
 		self.tokenizer = tokenizer
 
 
-	def parse_question(self, prompt):
-		premise, hypothesis = prompt.split("Premise: ")[1].split("Hypothesis: ")
-		return premise, hypothesis
+	def convert_to_logic(self, statement):
+		input = self.tokenizer(LlamaLogical.conversion_prompt+statement, return_tensors="pt").to("cuda")
+		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens)
+		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
+		# TO DO: Write regex script to extract the model's answer from output
+		logic_string = None #REPLACE THIS
 
-	def extract_formulas(self, raw_output):
-		# To add later
-		pass
-
-	def to_logic(question):
-		premise, hypothesis = self.parse_question(question)
-		prefix = """
-			Translate the following statement into epistemic logic, 
-			using K(a, x) to denote that a knows x and B(a, x) to 
-			denote that a believes x: 
-			"""
-
-		inputs = tokenizer([prefix+premise, prefix+hypothesis], return_tensors="pt").to("cuda")
-		generate_ids = model.generate(**input, max_new_tokens=100)
-		outputs = tokenizer.batch_decode(generate_ids, skip_special_tokens=True)
-		formulas = self.extract_formulas(outputs)
-		return formulas
+		return logic_string
 
 
 	def __call__(self, task):
@@ -61,7 +49,19 @@ class LlamaLogical:
 		# ans = is_entailment(prem_formula, hyp_formula)
 		# return ans
 
-		pass
+		# TO DO: write regex or split code to extract premise and hypothesis from question
+		premise_str = None #REPLACE THIS
+		hypothesis_str = None #REPLACE THIS
+
+		premise_logic = self.convert_to_logic(premise_str)
+		hypothesis_logic = self.convert_to_logic(hypothesis_str)
+
+		KB_prem = KnoweledgeBase.from_string(premise_logic)
+		KB_hyp = KnowledgeBase.from_string(hypothesis_logic)
+		
+		answer = KB_prem.entails(KB_hyp)
+		return "entailment" if answer else "non-entailment"
+
 
 # For testing the rest of the code quickly
 class RandModel:
