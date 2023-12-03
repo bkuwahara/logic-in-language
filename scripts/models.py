@@ -5,34 +5,45 @@ from epistemic_logic import KnowledgeBase
 
 llama_path = "meta-llama"
 
-
+"""
+Class for doing inference directly with the model
+"""
 class LlamaBasic:
-	def __init__(self, size):
+	
+
+	# model: string specifying the model to use, e.g. "13b"
+	def __init__(self, model):
 		
-		load_from = f"{llama_path}/Llama-2-{size}"
+		load_from = f"{llama_path}/Llama-2-{model}"
 		tokenizer = LlamaTokenizer.from_pretrained(load_from)
 		model = LlamaForCausalLM.from_pretrained(load_from)
 		self.model = model
 		self.tokenizer = tokenizer
 
+	# prompt: string giving the task prompt for the model to perform inference on
 	def __call__(self, prompt, max_new_tokens=10):
 		input = self.tokenizer(prompt, return_tensors="pt").to("cuda")
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
 		return model_output
 
-
+"""
+Class for wrapping an LLM with symbolic epistemic reasoning system
+"""
 class LlamaLogical:
 	conversion_prompt = "!!!TO DO!!!"
 
-	def __init__(self, size):		
-		load_from = f"{llama_path}/Llama-2-{size}"
+	# model: string specifying the model to use, e.g. "13b"
+	def __init__(self, model):		
+		load_from = f"{llama_path}/Llama-2-{model}"
 		tokenizer = LlamaTokenizer.from_pretrained(load_from)
 		model = LlamaForCausalLM.from_pretrained(load_from, **kwargs)
 		self.model = model
 		self.tokenizer = tokenizer
 
 
+	# Prompts the model to convert a statement into epistemic logic in string form
+	# statement: string to convert into logic
 	def convert_to_logic(self, statement):
 		input = self.tokenizer(LlamaLogical.conversion_prompt+statement, return_tensors="pt").to("cuda")
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens)
@@ -43,18 +54,13 @@ class LlamaLogical:
 		return logic_string
 
 
+	# Gets the model's prediction for a given problem
+	# task: string specifying the inference task
 	def __call__(self, task):
-		# Only pseudo-code for now!
-		# prem_formula, hyp_formula = to_logic(question)
-		# ans = is_entailment(prem_formula, hyp_formula)
-		# return ans
+		prem, hyp = prompt.split("Premise: ", maxsplit=1)[1].split("Hypothesis: ")
 
-		# TO DO: write regex or split code to extract premise and hypothesis from question
-		premise_str = None #REPLACE THIS
-		hypothesis_str = None #REPLACE THIS
-
-		premise_logic = self.convert_to_logic(premise_str)
-		hypothesis_logic = self.convert_to_logic(hypothesis_str)
+		premise_logic = self.convert_to_logic(prem)
+		hypothesis_logic = self.convert_to_logic(hyp)
 
 		KB_prem = KnoweledgeBase.from_string(premise_logic)
 		KB_hyp = KnowledgeBase.from_string(hypothesis_logic)
@@ -65,10 +71,11 @@ class LlamaLogical:
 
 # For testing the rest of the code quickly
 class RandModel:
-	def __init__(self, size):
+	def __init__(self, model):
 		pass
 
-
+	# Randomly returns an output for any prompt
+	# returns prompt as well to mimic LLM behaviour
 	def __call__(self, prompt):
 		bit = random.randint(0,2)
 		if bit == 0:

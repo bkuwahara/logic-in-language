@@ -1,11 +1,13 @@
 import re
 
-
+# Superclass for modal operators
 class Modal:
     def __init__(self, agent, proposition):
         self.agent = agent
         self.proposition = proposition
         
+    # Converts a modal operator and all nested premises into a set of 
+    # premises (removing any conjunctions)
     def to_set(self):
         modals = {self}
         if isinstance(self.proposition, Conjunction):
@@ -15,10 +17,13 @@ class Modal:
             modals.remove(self)
             modals = modals.union({type(self)(self.agent, clause) for clause in self.proposition.to_set()})
         return modals
-    
+
+    # Hash by string to enable relatively efficient set operations    
     def __hash__(self):
         return hash(str(self))
 
+    # Equivalent logics will have equivalent string representations
+    # (not the same as logical equivalence)
     def __eq__(self, other):
         return str(self) == str(other)
         
@@ -33,6 +38,7 @@ class KnowledgeOperator(Modal):
         return f"K({self.agent},{self.proposition})"
 
                 
+# Class for conjunctive logical formulae
 class Conjunction:
     def __init__(self, *args):
         if len(args) < 2:
@@ -42,6 +48,7 @@ class Conjunction:
     def __repr__(self):
         return " ^ ".join([str(clause) for clause in self.clauses])
     
+    # Converts a conjunction and all nested clauses within into a set of clauses with no conjunctions
     def to_set(self):
         output = set()
         for clause in self.clauses:
@@ -82,6 +89,8 @@ def get_modals(input_string):
     return output
 
 
+# Converts an input string into the suitable logic class
+# Leaves non-epistemic propositions as strings
 def to_logic(input_string):
     modals = get_modals(input_string)
     if len(modals) < 2:
@@ -90,7 +99,8 @@ def to_logic(input_string):
         return Conjunction(*modals)
     
 
-    
+# Converts any instances of knowledge operators in a formula
+# into a conjunction of belief operator and another formula
 def to_belief(formula):
     if isinstance(formula, str):
         return formula
@@ -107,8 +117,12 @@ def to_belief(formula):
         return output
                 
 
-
+"""
+Class for managing database of epistemic logic formulas
+"""
 class KnowledgeBase:
+
+    # Gets a set of all distinct agents present in a formula
     def extract_agents(formula):
         agents = set()
         if hasattr(formula, "agent"):
@@ -117,6 +131,8 @@ class KnowledgeBase:
                 agents = agents.union(KnowledgeBase.extract_agents(formula.proposition))
         return agents
                     
+    # Formulas: set of formulas to add to the database
+    # Automatically processed to remove conjunctions and K modals
     def __init__(self, formulas):
         self.formulas = set()
         agents = set()
@@ -126,10 +142,12 @@ class KnowledgeBase:
             self.formulas = self.formulas.union(formula.to_set())
         self.agents = agents
         
-        
+    # Initializes a KnowledgeBase from a string representing epistemic logic
     def from_string(input_string):
         return KnowledgeBase(to_logic(input_string).to_set())
     
+    # Decides if the formulas contained in the KnowledgeBase object entail
+    # the formula(s) in hypothesis
     def entails(self, hypothesis):
         if isinstance(hypothesis, KnowledgeBase):
             return hypothesis.formulas.issubset(self.formulas)
