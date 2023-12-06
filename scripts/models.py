@@ -1,24 +1,30 @@
 import torch
 import random
+import os
 from transformers import LlamaForCausalLM, LlamaTokenizer
 from epistemic_logic import KnowledgeBase
 
-llama_path = "meta-llama"
+os.chdir("/w/339/bkuwahara/csc2542")
 
 """
 Class for doing inference directly with the model
 """
 class LlamaBasic:
-	
-
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model):
+	def __init__(self, model_path):
 		
-		load_from = f"{llama_path}/Llama-2-{model}"
-		tokenizer = LlamaTokenizer.from_pretrained(load_from)
-		model = LlamaForCausalLM.from_pretrained(load_from)
+		tokenizer = LlamaTokenizer.from_pretrained(model_path)
+		model = LlamaForCausalLM.from_pretrained(model_path)
 		self.model = model
 		self.tokenizer = tokenizer
+
+		with open("./prompts/prompt_to_answer.txt", r) as f:
+			prompt = f.read()
+			input_ids = tokenizer.encode(prompt, return_tensors='pt').to('cuda')
+			outputs = model(input_ids, output_hidden_states=True)
+			self.encoded_prompt = outputs.past_key_values
+
+
 
 	# prompt: string giving the task prompt for the model to perform inference on
 	def __call__(self, prompt, max_new_tokens=10):
@@ -31,15 +37,20 @@ class LlamaBasic:
 Class for wrapping an LLM with symbolic epistemic reasoning system
 """
 class LlamaLogical:
-	conversion_prompt = "!!!TO DO!!!"
 
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model):		
-		load_from = f"{llama_path}/Llama-2-{model}"
-		tokenizer = LlamaTokenizer.from_pretrained(load_from)
-		model = LlamaForCausalLM.from_pretrained(load_from, **kwargs)
+	def __init__(self, model_path):		
+		tokenizer = LlamaTokenizer.from_pretrained(model_path)
+		model = LlamaForCausalLM.from_pretrained(model_path)
 		self.model = model
 		self.tokenizer = tokenizer
+		
+		with open("./prompts/prompt_to_translate.txt", r) as f:
+			prompt = f.read()
+			input_ids = tokenizer.encode(prompt, return_tensors='pt')
+			outputs = model(input_ids, output_hidden_states=True)
+			self.encoded_prompt = outputs.past_key_values
+
 
 
 	# Prompts the model to convert a statement into epistemic logic in string form
