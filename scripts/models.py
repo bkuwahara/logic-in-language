@@ -1,7 +1,7 @@
 import torch
 import random
 import os
-from transformers import LlamaForCausalLM, LlamaTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from epistemic_logic import KnowledgeBase
 
 os.chdir("/w/339/bkuwahara/csc2542")
@@ -13,23 +13,31 @@ class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
 	def __init__(self, model_path):
 		
-		tokenizer = LlamaTokenizer.from_pretrained(model_path)
-		model = LlamaForCausalLM.from_pretrained(model_path)
+		tokenizer = AutoTokenizer.from_pretrained(model_path)
+		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload')
 		self.model = model
 		self.tokenizer = tokenizer
 
 		with open("./prompts/prompt_to_answer.txt", r) as f:
 			prompt = f.read()
-			input_ids = tokenizer.encode(prompt, return_tensors='pt').to('cuda')
+			self.prompt=prompt
+
+
+		prompt_acts = f"./prompts/{model_path}/respond.pt"
+		if os.path.isfile(prompt_acts):
+			self.encoded_prompt = torch.load(prompt_acts)
+		else:
+			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to('cuda')
 			outputs = model(input_ids, output_hidden_states=True)
 			self.encoded_prompt = outputs.past_key_values
+			torch.save(self.encoded_prompt, prompt_acts)
 
 
 
 	# prompt: string giving the task prompt for the model to perform inference on
 	def __call__(self, prompt, max_new_tokens=10):
-		input = self.tokenizer(prompt, return_tensors="pt").to("cuda")
-		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens)
+		input = self.tokenizer(self.prompt+'\n'+prompt, return_tensors="pt").to("cuda")
+		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
 		return model_output
 
