@@ -3,3 +3,4 @@ scripts/offload
 venv
 results
 *.save
+*.svn
