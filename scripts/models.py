@@ -9,16 +9,19 @@ os.chdir("/w/339/bkuwahara/csc2542")
 """
 Class for doing inference directly with the model
 """
+
 class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
 	def __init__(self, model_path):
+
+		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		
 		tokenizer = AutoTokenizer.from_pretrained(model_path)
 		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload')
 		self.model = model
 		self.tokenizer = tokenizer
 
-		with open("./prompts/prompt_to_answer.txt", r) as f:
+		with open("./prompts/prompt_to_answer.txt", 'r') as f:
 			prompt = f.read()
 			self.prompt=prompt
 
@@ -27,7 +30,7 @@ class LlamaBasic:
 		if os.path.isfile(prompt_acts):
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
-			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to('cuda')
+			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to(self.device)
 			outputs = model(input_ids, output_hidden_states=True)
 			self.encoded_prompt = outputs.past_key_values
 			torch.save(self.encoded_prompt, prompt_acts)
@@ -36,7 +39,7 @@ class LlamaBasic:
 
 	# prompt: string giving the task prompt for the model to perform inference on
 	def __call__(self, prompt, max_new_tokens=10):
-		input = self.tokenizer(self.prompt+'\n'+prompt, return_tensors="pt").to("cuda")
+		input = self.tokenizer(self.prompt+'\n'+prompt, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
 		return model_output
@@ -107,20 +110,18 @@ class RandModel:
 if __name__ == "__main__":
 	import json
 
-	model = LlamaBasic("13b")
+	model = LlamaBasic("meta-llama/Llama-2-13b-hf")
 		
 
 	# Test the model on the actual data
-	with open("../datasets/task.json") as data_file:
+	with open("./datasets/task.json") as data_file:
     		data = json.load(data_file)
 
 	prefix = data["task_prefix"]
 	questions = data["examples"]
 
-	q = questions[0]
-	query = q["input"]
-	prompt = prefix + query + "\nYour answer: "
-	#print(prompt)
+	q = questions[0]["input"]
+	print(q)
 
-	out = model(prompt)
-	print("Reasoning prompt output: " + out)
+	out = model(q,max_new_tokens=100)
+	print(out)
