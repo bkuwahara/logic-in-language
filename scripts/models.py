@@ -12,7 +12,7 @@ Class for doing inference directly with the model
 
 class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path):
+	def __init__(self, model_path, chain_of_thought=False):
 
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		
@@ -21,13 +21,16 @@ class LlamaBasic:
 		self.model = model
 		self.tokenizer = tokenizer
 
-		with open("./prompts/prompt_to_answer.txt", 'r') as f:
+
+		prompt_name = "respond_cot" if chain_of_thought else "respond"
+		with open(f"./prompts/{prompt_name}.txt", 'r') as f:
 			prompt = f.read()
 			self.prompt=prompt
 
 
-		prompt_acts = f"./prompts/{model_path}/respond.pt"
+		prompt_acts = f"./prompts/{model_path}/{prompt_name}.pt"
 		if os.path.isfile(prompt_acts):
+			print("Here", prompt_acts)
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
 			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to(self.device)
@@ -54,7 +57,7 @@ Class for wrapping an LLM with symbolic epistemic reasoning system
 class LlamaLogical:
 
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path):		
+	def __init__(self, model_path, chain_of_thought=False):		
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		
 		tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -62,12 +65,13 @@ class LlamaLogical:
 		self.model = model
 		self.tokenizer = tokenizer
 
-		with open("./prompts/prompt_to_translate.txt", 'r') as f:
+		prompt_name = "translate_cot" if chain_of_thought else "translate"
+		with open(f"./prompts/{prompt_name}.txt", 'r') as f:
 			prompt = f.read()
 			self.prompt=prompt
 
 
-		prompt_acts = f"./prompts/{model_path}/translate.pt"
+		prompt_acts = f"./prompts/{model_path}/{prompt_name}.pt"
 		if os.path.isfile(prompt_acts):
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
@@ -129,19 +133,22 @@ class RandModel:
 if __name__ == "__main__":
 	import json
 
-	model = LlamaBasic("meta-llama/Llama-2-13b-hf")
-			
+#	model = LlamaBasic("meta-llama/Llama-2-13b-hf")
+#	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
+#	model = LlamaBasic("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
+	model = LlamaLogical("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
+
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
 
 	# Test the model on the actual data
-	with open("./datasets/task.json") as data_file:
-    		data = json.load(data_file)
+#	with open("./datasets/task.json") as data_file:
+ #   		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-	questions = data["examples"]
-
-	q = questions[0]["input"]
-	print(q)
+#	questions = data["examples"]
+#
+#	q = questions[0]["input"]
+#	print(q)
 
 	#q = "Joseph suspects that Charles believes that a white dog is running through the water at a beach."
 
@@ -149,5 +156,5 @@ if __name__ == "__main__":
 	#print("Full model output: "+out)
 	#logic_string = out.split("Answer: ")[-1].split("$$")[1]
 	#print("Isolated logic string: "+logic_string)
-	answer = model(q, return_full_output=True)
-	print(answer)
+#	answer = model(q, return_full_output=True)
+#	print(answer)

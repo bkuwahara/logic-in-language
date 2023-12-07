@@ -22,7 +22,7 @@ def load_data():
 
 
 
-def evaluate(model_name, path, output_dir):
+def evaluate(model_name, chain_of_thought, path, output_dir):
 
 	# Load in the model
 	if model_name == "basic":
@@ -55,7 +55,8 @@ def evaluate(model_name, path, output_dir):
 		# Loop through questions
 		for i, q in enumerate(questions[:50]):
 			query = q["input"]
-			model_output = model(query, max_new_tokens=100)
+			max_new_tokens = 100 if chain_of_thought else 20
+			model_output = model(query, max_new_tokens=max_new_tokens)
 
 			is_invalid = ans not in ["entailment", "non-entailment"]
 			correct = "NaN" if is_invalid else q["target_scores"][ans]
@@ -78,12 +79,14 @@ if __name__ == "__main__":
 		help="The path to the LLM to use (huggingface path)")
 	parser.add_argument("--output_dir", default="results",
 		help="Directory to save results to")
+	parser.add_argument("--chain_of_thought", default=0, type=int,
+		help="Whether or not to use chain of thought reasoning")
 
 
 	args = parser.parse_args()
 
 #	print(args.model, args.output_dir, args.size)
-	acc, inv = evaluate(args.model, args.path, args.output_dir)
+	acc, inv = evaluate(args.model, args.chain_of_thought, args.path, args.output_dir)
 	
 
 

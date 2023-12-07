@@ -1,3 +1,5 @@
+scripts/pdkb
+scripts/__pycache__
 shells
 scripts/offload
 venv
@@ -5,3 +7,5 @@ results
 *.save
 *.svn
 *.pt
+*.err
+*.out
