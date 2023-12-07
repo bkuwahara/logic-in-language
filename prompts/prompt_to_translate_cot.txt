@@ -1,0 +1,21 @@
+Translate each of the following premises into Epistemic logic notation. Use $$B(Agent,p)$$ to denote that Agent believes p and$$K(Agent,p)$$ to denote that Agent knows p. Think step by step.
+
+Premise: James remembers that Michael believes that a man is walking past a large sign that says E.S.E. Electronics. 
+Reasoning: Let p be the proposition that a man is walking past a large sign that says E.S.E. Electronics. The premise is that James knows that Michael believes p.
+Answer: $$K(James,B(Michael,p))$$
+
+Premise: Charlotte recognizes that David believes that two adults hold either side of a boat at the edge of the water. 
+Reasoning: Let p be the event that two adults hold either side of a boat at the edge of the water. The premise says that Charlotte knows David believes p. 
+Answer: $$K(Charlotte,B(David,p))$$
+
+Premise: Evelyn suspects that Joseph understands that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag.
+Reasoning: Reasoning: Let p be the event that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag. The premise is that Evelyn believes that Joseph knows p.
+Answer: $$B(Evelyn,K(Joseph,p))$$
+
+Premise: Robert assumes that Olivia assumes that artists install a new exhibit in a gallery. 
+Reasoning: Let p be the event that artists install a new exhibit in a gallery. The premise is that Robert believes that Olivia believes p. 
+Answer: $$B(Robert,B(Olivia,p))$$
+
+Premise: Richard suspects that Amelia knows that the wind propels a sailing ship on a group of cruisers.
+Reasoning: Let p be the event that the wind propels a sailing ship on a group of cruisers. The premise is that Richard believes that Amelia knows p. 
+Answer: $$B(Richard,K(Amelia,p))$$
