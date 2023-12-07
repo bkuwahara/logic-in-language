@@ -30,7 +30,6 @@ class LlamaBasic:
 
 		prompt_acts = f"./prompts/{model_path}/{prompt_name}.pt"
 		if os.path.isfile(prompt_acts):
-			print("Here", prompt_acts)
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
 			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to(self.device)

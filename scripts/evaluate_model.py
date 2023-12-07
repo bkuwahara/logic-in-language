@@ -45,7 +45,10 @@ def evaluate(model_name, chain_of_thought, path, output_dir):
 	savedir = f"./{output_dir}/{model_name}/{path}"
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
-	output_file = f"{savedir}/results.csv"
+	output_file = f"{savedir}/results"
+	if chain_of_thought:
+		output_file += "_cot"
+	output_file += ".csv"
 	
 	with open(output_file, 'w', newline='') as output:
 		writer = csv.writer(output)
@@ -53,15 +56,15 @@ def evaluate(model_name, chain_of_thought, path, output_dir):
 		writer.writerow(header)
 
 		# Loop through questions
-		for i, q in enumerate(questions[:50]):
+		for i, q in enumerate(questions[:750]):
 			query = q["input"]
 			max_new_tokens = 100 if chain_of_thought else 20
 			model_output = model(query, max_new_tokens=max_new_tokens)
-
-			is_invalid = ans not in ["entailment", "non-entailment"]
-			correct = "NaN" if is_invalid else q["target_scores"][ans]
-			writer.writerow([i, ans, correct])
-			score += 0 if is_invalid else q["target_scores"][ans]
+			print(i, model_output)
+			is_invalid = model_output not in ["entailment", "non-entailment"]
+			correct = "NaN" if is_invalid else q["target_scores"][model_output]
+			writer.writerow([i, model_output, correct])
+			score += 0 if is_invalid else q["target_scores"][model_output]
 			num_invalid += is_invalid
 		
 		writer.writerow(["accuracy", score / len(questions), "num_invalid", num_invalid])
@@ -88,7 +91,7 @@ if __name__ == "__main__":
 #	print(args.model, args.output_dir, args.size)
 	acc, inv = evaluate(args.model, args.chain_of_thought, args.path, args.output_dir)
 	
-
+	print(acc,inv)
 
 
 
