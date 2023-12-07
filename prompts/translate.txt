@@ -1,0 +1,15 @@
+Translate each of the following premises into Epistemic logic notation. Use $$B(Agent,p)$$ to denote that Agent believes p and$$K(Agent,p)$$ to denote that Agent knows p.
+
+Answer: $$K(James,B(Michael,p))$$
+
+Premise: Charlotte recognizes that David believes that two adults hold either side of a boat at the edge of the water. 
+Answer: $$K(Charlotte,B(David,p))$$
+
+Premise: Evelyn suspects that Joseph understands that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag.
+Answer: $$B(Evelyn,K(Joseph,p))$$
+
+Premise: Robert assumes that Olivia assumes that artists install a new exhibit in a gallery. 
+Answer: $$B(Robert,B(Olivia,p))$$
+
+Premise: Richard suspects that Amelia knows that the wind propels a sailing ship on a group of cruisers.
+Answer: $$B(Richard,K(Amelia,p))$$
