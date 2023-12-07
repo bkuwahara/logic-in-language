@@ -63,6 +63,7 @@ class LlamaLogical:
 		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload')
 		self.model = model
 		self.tokenizer = tokenizer
+		self.chain_of_thought=chain_of_thought
 
 		prompt_name = "translate_cot" if chain_of_thought else "translate"
 		with open(f"./prompts/{prompt_name}.txt", 'r') as f:
@@ -99,11 +100,12 @@ class LlamaLogical:
 	# Gets the model's prediction for a given problem
 	# task: string specifying the inference task
 	def __call__(self, task):
+		max_new_tokens = 100 if self.chain_of_thought else 20
 		prem, hyp = task.split("Premise: ", maxsplit=1)[1].split("Hypothesis: ")
 		print("Premise string: " + prem)
 		print("Hypothesis string: " + hyp)
-		premise_logic = self.convert_to_logic(prem)
-		hypothesis_logic = self.convert_to_logic(hyp)
+		premise_logic = self.convert_to_logic(prem, max_new_tokens=max_new_tokens)
+		hypothesis_logic = self.convert_to_logic(hyp, max_new_tokens=max_new_tokens)
 		print("premise logic: " + premise_logic)
 		print("hypothesis logic: " + hypothesis_logic)
 		KB_prem = KnowledgeBase.from_string(premise_logic)
@@ -133,27 +135,26 @@ if __name__ == "__main__":
 	import json
 
 #	model = LlamaBasic("meta-llama/Llama-2-13b-hf")
-#	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
+	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
 #	model = LlamaBasic("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
-	model = LlamaLogical("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
+#	model = LlamaLogical("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
 
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
 
 	# Test the model on the actual data
-#	with open("./datasets/task.json") as data_file:
- #   		data = json.load(data_file)
+	with open("./datasets/task.json") as data_file:
+		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-#	questions = data["examples"]
-#
-#	q = questions[0]["input"]
-#	print(q)
+	questions = random.choices(data["examples"], k=10)
+	
+	for question in questions:
+		q = question["input"]
+	#	print(q)
 
-	#q = "Joseph suspects that Charles believes that a white dog is running through the water at a beach."
-
-	#out = model.convert_to_logic(q,max_new_tokens=100, return_full_output=True)
+		#out = model.convert_to_logic(q,max_new_tokens=100, return_full_output=True)
 	#print("Full model output: "+out)
 	#logic_string = out.split("Answer: ")[-1].split("$$")[1]
 	#print("Isolated logic string: "+logic_string)
-#	answer = model(q, return_full_output=True)
-#	print(answer)
+		answer = model(q)
+		print(answer)

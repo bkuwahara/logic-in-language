@@ -56,7 +56,7 @@ def evaluate(model_name, chain_of_thought, path, output_dir):
 		writer.writerow(header)
 
 		# Loop through questions
-		for i, q in enumerate(questions[:750]):
+		for i, q in enumerate(questions[:500]):
 			query = q["input"]
 			max_new_tokens = 100 if chain_of_thought else 20
 			model_output = model(query, max_new_tokens=max_new_tokens)
