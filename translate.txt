@@ -1,0 +1,21 @@
+Translate each of the following premises and hypotheses into Epistemic logic notation. Use $$B(Agent,p)$$ to denote that Agent believes p and $$K(Agent,p)$$ to denote that Agent knows p. Use p ^ q to denote p and q.
+
+Premise: James remembers that Michael believes that a man is walking past a large sign that says E.S.E. Electronics. Hypothesis: Michael believes that a man is walking past a large sign that says E.S.E. Electronics.
+Translated premise: $$K(James,B(Michael,a man is walking past a large sign that says E.S.E. Electronics))$$
+Translated hypothesis: $$B(Michael,a man is walking past a large sign that says E.S.E. Electronics))$$
+
+Premise: Charlotte recognizes that David believes that two adults hold either side of a boat at the edge of the water. Hypothesis: David believes that Charlotte recognizes that two adults hold either side of a boat at the edge of the water.
+Translated premise: $$K(Charlotte,B(David,two adults hold either side of a boat at the edge of the water))$$
+Translated hypothesis: $$B(David,K(Charlotte,two adults hold either side of a boat at the edge of the water))$$
+
+Premise: Evelyn suspects that Joseph understands that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag. Hypothesis: Ava understands that Emma suspects that a person with braided hair and a gray sweatshirt covers his mouth and sits in a purple chair. 
+Translated premise: $$B(Evelyn,K(Joseph,at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag))$$
+Translated hypothesis: $$K(Ava,B(Emma,a person with braided hair and a gray sweatshirt covers his mouth and sits in a purple chair))$$
+
+Premise: Robert assumes that Olivia assumes that artists install a new exhibit in a gallery. Hypothesis: Olivia believes that a topless man straps surfboards on top of his blue car.
+Translated premise: $$B(Robert,B(Olivia,artists install a new exhibit in a gallery))$$
+Translated hypothesis: $$B(Olivia,a topless man straps surfboards on top of his blue car)$$
+
+Premise: Richard suspects that a man wearing shorts and a blue t-shirt is applying signage to the display window of an ice cream shop. Hypothesis: Richard suspects that a man is putting a sign in the window.
+Translated premise: $$B(Richard,a man wearing shorts and a blue t-shirt is applying signage to the display window of an ice cream shop)$$
+Translated hypothesis: $$B(Richard,a man is putting a sign in the window.)$$
