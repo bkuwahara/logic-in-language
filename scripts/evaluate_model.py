@@ -57,19 +57,19 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
 		header = ["question_index", "response", "is_correct"]
 		writer.writerow(header)
 
-		# Loop through questions
-		for i, q in enumerate(questions[::]):
-			query = q["input"]
-			max_new_tokens = 100 if chain_of_thought else 20
-			model_output = model(query, max_new_tokens=max_new_tokens)
-			#print(i, model_output)
-			is_invalid = model_output not in ["entailment", "non-entailment"]
+	# Loop through questions
+	for i, q in enumerate(questions[::]):
+		query = q["input"]
+		model_output = model(query, return_full_output=False)
+		#print(i, model_output)
+		is_invalid = model_output not in ["entailment", "non-entailment"]
+		
+		with open(output_file, 'a', newline='') as output:
+			writer = csv.writer(output)
 			correct = "NaN" if is_invalid else q["target_scores"][model_output]
 			writer.writerow([i, model_output, correct])
-			score += 0 if is_invalid else q["target_scores"][model_output]
-			num_invalid += is_invalid
-		
-		writer.writerow(["accuracy", score / len(questions), "num_invalid", num_invalid])
+		score += 0 if is_invalid else q["target_scores"][model_output]
+		num_invalid += is_invalid		
 	
 	return score / len(questions), num_invalid
 

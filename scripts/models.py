@@ -90,7 +90,7 @@ class LlamaLogical:
 	# Gets the model's prediction for a given problem
 	# task: string specifying the inference task
 	def __call__(self, task, return_full_output=False):
-		max_new_tokens = 100 if self.chain_of_thought else 75
+		max_new_tokens = 120
 		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
@@ -98,16 +98,17 @@ class LlamaLogical:
 		if return_full_output:
 			return model_output
 		else:
-			_p, _h = model_output.split("Translated premise: ")[-1].split("Translated hypothesis: ")
-			premise_logic = _p.split("$$")[1]
-			hypothesis_logic = _h.split("$$")[1]
 			try:
+				_p, _h = model_output.split("Translated premise: ")[-1].split("Translated hypothesis: ")
+				premise_logic = _p.split("$$")[1]
+				hypothesis_logic = _h.split("$$")[1]
+
 				KB_prem = KnowledgeBase.from_string(premise_logic)
 				KB_hyp = KnowledgeBase.from_string(hypothesis_logic)
 				answer = KB_prem.entails(KB_hyp)
 				return "entailment" if answer else "non-entailment"
 			except:
-				return "Invalid response"
+				return model_output[len(self.prompt):]
 
 
 
