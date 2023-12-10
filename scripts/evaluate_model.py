@@ -9,6 +9,8 @@ import argparse
 import tqdm
 os.chdir("/w/339/bkuwahara/csc2542")
 
+random.seed(2023) # Needed to get same subset of questions each run (running all takes too long)
+
 from models import LlamaBasic, LlamaLogical, RandModel
 
 def load_data():
@@ -22,21 +24,21 @@ def load_data():
 
 
 
-def evaluate(model_name, chain_of_thought, path, output_dir):
+def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
 
 	# Load in the model
 	if model_name == "basic":
-		model = LlamaBasic(path)
+		model = LlamaBasic(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
 	elif model_name == "logical":
-		model = LlamaLogical(path)
+		model = LlamaLogical(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
 	elif model_name == "random":
-		model = RandModel(path)
+		model = RandModel(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
 	else:
 		raise ValueError("Model must be one of basic, logical, or random. Given {}".format(args.model))
 
 	
-	prefix, questions = load_data()
-
+	prefix, _questions = load_data()
+	questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
 	score = 0
 	num_invalid = 0		
 
@@ -45,7 +47,7 @@ def evaluate(model_name, chain_of_thought, path, output_dir):
 	savedir = f"./{output_dir}/{model_name}/{path}"
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
-	output_file = f"{savedir}/results"
+	output_file = f"{savedir}/results_{n_shots}shot"
 	if chain_of_thought:
 		output_file += "_cot"
 	output_file += ".csv"
@@ -56,11 +58,11 @@ def evaluate(model_name, chain_of_thought, path, output_dir):
 		writer.writerow(header)
 
 		# Loop through questions
-		for i, q in enumerate(questions[:500]):
+		for i, q in enumerate(questions[::]):
 			query = q["input"]
 			max_new_tokens = 100 if chain_of_thought else 20
 			model_output = model(query, max_new_tokens=max_new_tokens)
-			print(i, model_output)
+			#print(i, model_output)
 			is_invalid = model_output not in ["entailment", "non-entailment"]
 			correct = "NaN" if is_invalid else q["target_scores"][model_output]
 			writer.writerow([i, model_output, correct])
@@ -82,6 +84,8 @@ if __name__ == "__main__":
 		help="The path to the LLM to use (huggingface path)")
 	parser.add_argument("--output_dir", default="results",
 		help="Directory to save results to")
+	parser.add_argument("--n_shots", default=3, type=int,
+		help="The number of examples the model will see in its prompt prior to inference (must have a pre-existing prompt file)")
 	parser.add_argument("--chain_of_thought", default=0, type=int,
 		help="Whether or not to use chain of thought reasoning")
 
@@ -89,7 +93,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 #	print(args.model, args.output_dir, args.size)
-	acc, inv = evaluate(args.model, args.chain_of_thought, args.path, args.output_dir)
+	acc, inv = evaluate(args.model, args.chain_of_thought, args.n_shots, args.path, args.output_dir)
 	
 	print(acc,inv)
 

@@ -1,0 +1,13 @@
+Identify the relation between the following premises and hypotheses, choosing from the options 'entailment' or 'non-entailment'. Note that under the rules of epistemic logic, knowledge is assumed to be true while belief may or may not be true. Think step by step.
+
+Premise: Evelyn suspects that Joseph understands that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag. Hypothesis: Joseph understands that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag.
+Reasoning: Let p be the event that at a table with an art camp pamphlet on it, a young woman and an older man are painting ceramics under the supervision of a blond woman wearing a name tag. The premise is that Evelyn believes that Joseph knows p. The hypothesis is that Joseph knows p. Evelyn's belief may be incorrect. Therefore, the premise does not entail the hypothesis.
+Answer: non-entailment
+
+Premise: Robert assumes that Olivia assumes that artists install a new exhibit in a gallery. Hypothesis: Robert assumes that artists install a new exhibit in a gallery.
+Reasoning: Let p be the event that artists install a new exhibit in a gallery. The premise is that Robert believes that Olivia believes p. The hypothesis is that Robert believes p. Robert may believe that Olivia's belief in p is false, therefore the premise does not entail the hypothesis.
+Answer: non-entailment
+
+Premise: Richard suspects that Amelia knows that the wind propels a sailing ship on a group of cruisers. Hypothesis: Richard suspects that the wind propels a sailing ship on a group of cruisers.
+Reasoning: Let p be the event that the wind propels a sailing ship on a group of cruisers. The premise is that Richard believes that Amelia knows p. The hypothesis is that Richard believes p. Since Richard believes Amelia knows p, he believes p is true. Thus, the premise entails the hypothesis.
+Answer: entailment

@@ -10,20 +10,23 @@ os.chdir("/w/339/bkuwahara/csc2542")
 Class for doing inference directly with the model
 """
 
+token = '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'
+
 class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path, chain_of_thought=False):
+	def __init__(self, model_path, n_shots=3, chain_of_thought=False):
 
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		offload_state_dict = torch.cuda.is_available()
 
-		tokenizer = AutoTokenizer.from_pretrained(model_path)
-		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict)
+		tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
+		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
 		self.model = model
 		self.tokenizer = tokenizer
+		self.chain_of_thought = chain_of_thought
 
-
-		prompt_name = "respond_cot" if chain_of_thought else "respond"
+		
+		prompt_name = f"respond_{n_shots}shot" + ("_cot" if chain_of_thought else "")
 		with open(f"./prompts/{prompt_name}.txt", 'r') as f:
 			prompt = f.read()
 			self.prompt=prompt
@@ -41,8 +44,9 @@ class LlamaBasic:
 
 
 	# prompt: string giving the task prompt for the model to perform inference on
-	def __call__(self, prompt, max_new_tokens=100, return_full_output=False):
-		input = self.tokenizer(self.prompt+'\n'+prompt, return_tensors="pt").to(self.device)
+	def __call__(self, task, return_full_output=False):
+		max_new_tokens = 100 if self.chain_of_thought else 8
+		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
 		if not return_full_output:
@@ -57,17 +61,17 @@ Class for wrapping an LLM with symbolic epistemic reasoning system
 class LlamaLogical:
 
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path, chain_of_thought=False):		
+	def __init__(self, model_path, n_shots=3, chain_of_thought=False):		
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		offload_state_dict = torch.cuda.is_available()
 		
-		tokenizer = AutoTokenizer.from_pretrained(model_path)
-		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict)
+		tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
+		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
 		self.model = model
 		self.tokenizer = tokenizer
 		self.chain_of_thought=chain_of_thought
 
-		prompt_name = "translate_cot" if chain_of_thought else "translate"
+		prompt_name = f"translate_{n_shots}shot" + ("_cot" if chain_of_thought else "")
 		with open(f"./prompts/{prompt_name}.txt", 'r') as f:
 			prompt = f.read()
 			self.prompt=prompt
@@ -83,24 +87,10 @@ class LlamaLogical:
 			torch.save(self.encoded_prompt, prompt_acts)
 
 
-	# Prompts the model to convert a statement into epistemic logic in string form
-	# statement: string to convert into logic
-	def convert_to_logic(self, statement, max_new_tokens=100, return_full_output=False):
-		input = self.tokenizer(self.prompt+'\n'+statement, return_tensors="pt").to(self.device)
-		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
-		
-		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
-
-		if return_full_output:
-			return model_output
-		else:
-			logic_string = model_output.split("Answer: ")[-1].split("$$")[1]
-			return logic_string
-
-
 	# Gets the model's prediction for a given problem
 	# task: string specifying the inference task
-	def __call__(self, task, return_full_output=False, max_new_tokens=100):
+	def __call__(self, task, return_full_output=False):
+		max_new_tokens = 100 if self.chain_of_thought else 75
 		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
@@ -108,7 +98,7 @@ class LlamaLogical:
 		if return_full_output:
 			return model_output
 		else:
-			_p, _h = out.split("Translated premise: ")[-1].split("Translated hypothesis: ")
+			_p, _h = model_output.split("Translated premise: ")[-1].split("Translated hypothesis: ")
 			premise_logic = _p.split("$$")[1]
 			hypothesis_logic = _h.split("$$")[1]
 			try:
@@ -133,27 +123,26 @@ class LlamaLogical:
 
 # For testing the rest of the code quickly
 class RandModel:
-	def __init__(self, model):
+	def __init__(self, model_path, **kwargs):
 		pass
 
 	# Randomly returns an output for any prompt
-	# returns prompt as well to mimic LLM behaviour
-	def __call__(self, prompt):
+	def __call__(self, prompt, **kwargs):
 		bit = random.randint(0,2)
 		if bit == 0:
-			return prompt + "entailment"
+			return "entailment"
 		elif bit == 1:
-			return prompt + "non-entailment"
+			return "non-entailment"
 		else:
-			return prompt + "I don't understand"
+			return "I don't understand"
 
 if __name__ == "__main__":
 	import json
-
-#	model = LlamaBasic("meta-llama/Llama-2-13b-hf")
-#	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
-#	model = LlamaBasic("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
-	model = LlamaLogical("meta-llama/Llama-2-13b-hf", chain_of_thought=True)
+	path="meta-llama/Llama-2-13b-hf"
+#	model = LlamaBasic(path)
+#	model = LlamaLogical(path)
+#	model = LlamaBasic(path, chain_of_thought=True)
+	model = LlamaLogical(path, chain_of_thought=True)
 
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
 
@@ -162,7 +151,7 @@ if __name__ == "__main__":
 		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-	questions = random.choices(data["examples"], k=2)
+	questions = random.choices(data["examples"], k=1)
 	
 	for question in questions:
 		q = question["input"]
@@ -172,5 +161,5 @@ if __name__ == "__main__":
 	#print("Full model output: "+out)
 	#logic_string = out.split("Answer: ")[-1].split("$$")[1]
 	#print("Isolated logic string: "+logic_string)
-		answer = model(q, return_full_output=True, max_new_tokens=100)
+		answer = model(q, return_full_output=False)
 		print(answer)
