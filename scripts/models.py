@@ -2,7 +2,7 @@ import torch
 import random
 import os
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from epistemic_logic import KnowledgeBase
+from epistemic_logic import KnowledgeBase, is_entailment
 
 os.chdir("/w/339/bkuwahara/csc2542")
 
@@ -90,7 +90,7 @@ class LlamaLogical:
 	# Gets the model's prediction for a given problem
 	# task: string specifying the inference task
 	def __call__(self, task, return_full_output=False):
-		max_new_tokens = 120
+		max_new_tokens = 150
 		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
@@ -103,10 +103,14 @@ class LlamaLogical:
 				premise_logic = _p.split("$$")[1]
 				hypothesis_logic = _h.split("$$")[1]
 
-				KB_prem = KnowledgeBase.from_string(premise_logic)
-				KB_hyp = KnowledgeBase.from_string(hypothesis_logic)
-				answer = KB_prem.entails(KB_hyp)
-				return "entailment" if answer else "non-entailment"
+				#KB_prem = KnowledgeBase.from_string(premise_logic)
+				#KB_hyp = KnowledgeBase.from_string(hypothesis_logic)
+				#answer = KB_prem.entails(KB_hyp)
+				#return "entailment" if answer else "non-entailment"
+				answer = is_entailment(premise_logic,hypothesis_logic)
+				if answer != 'entailment':
+					return 'non-entailment' # for now both inconsistency and non-entailment should be treated as non-entailment
+				return answer
 			except:
 				return model_output[len(self.prompt):]
 
@@ -142,8 +146,8 @@ if __name__ == "__main__":
 	path="meta-llama/Llama-2-13b-hf"
 #	model = LlamaBasic(path)
 #	model = LlamaLogical(path)
-#	model = LlamaBasic(path, chain_of_thought=True)
-	model = LlamaLogical(path, chain_of_thought=True)
+	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
+#	model = LlamaLogical(path, chain_of_thought=True)
 
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
 

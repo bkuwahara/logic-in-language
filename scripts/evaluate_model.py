@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
 
 	args = parser.parse_args()
-
+	print(args.chain_of_thought)
 #	print(args.model, args.output_dir, args.size)
 	acc, inv = evaluate(args.model, args.chain_of_thought, args.n_shots, args.path, args.output_dir)
 	

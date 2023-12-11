@@ -33,6 +33,13 @@ class Modal:
 class BeliefOperator(Modal):
     def __repr__(self):
         return f"B({self.agent},{self.proposition})"
+    def to_rml(self):
+        if isinstance(self.proposition, BeliefOperator):
+            return Belief(self.agent, self.proposition.to_rml())
+        elif isinstance(self.proposition, KnowledgeOperator):
+            raise TypeError("to_rml is only supported for pure belief structures")
+        else:
+            return Belief(self.agent, Literal(self.proposition))
 
         
 class KnowledgeOperator(Modal):
@@ -73,7 +80,12 @@ def get_modals(input_string):
     
     _exprs = re.findall('[KB]\(([^)]+)', input_string)
     if not _exprs:
-        return [input_string]
+        # check if conjunction of literals
+        props = input_string.split(" ^ ")
+        if len(props) == 1:
+            return [input_string]
+        else:
+            return [Conjunction(*props)]
     
     exprs = [x + ')'*x.count('(') for x in _exprs]
     for expr in exprs:
@@ -132,15 +144,18 @@ class KnowledgeBase:
             if hasattr(formula, "proposition"):
                 agents = agents.union(KnowledgeBase.extract_agents(formula.proposition))
         return agents
-                    
+
+        
+
     # Formulas: set of formulas to add to the database
     # Automatically processed to remove conjunctions and K modals
     def __init__(self, formulas):
         self.formulas = set()
         agents = set()
         for formula in formulas:
+            f_agents = KnowledgeBase.extract_agents(formula)
             formula = to_belief(formula)
-            agents = agents.union(KnowledgeBase.extract_agents(formula))
+            agents = agents.union(f_agents)
             self.formulas = self.formulas.union(formula.to_set())
         self.agents = agents
         
@@ -159,3 +174,63 @@ class KnowledgeBase:
             return hypothesis in self.formulas
         return hypothesis.issubset(self.formulas)
     
+    def to_PDKB(self, depth):
+        def extract_literal(formula):
+            if hasattr(formula, "proposition"):
+                return extract_literal(formula.proposition)
+            return Literal(formula)
+
+        literals = set()
+        for f in self.formulas:
+            literals.add(extract_literal(f))
+
+        kb = PDKB(depth, list(self.agents), list(literals))
+        for f in self.formulas:
+            if not isinstance(f, BeliefOperator):
+                if f[0] == '!':
+                    kb.add_rml(neg(Literal(f[1:])))
+                else:
+                    kb.add_rml(Literal(f))
+            else:
+                kb.add_rml(f.to_rml())
+        return kb
+
+
+def is_entailment(premise, hypothesis, depth=2):
+    prem_kb = KnowledgeBase.from_string(premise).to_PDKB(depth)
+    hyp_kb = KnowledgeBase.from_string(hypothesis).to_PDKB(depth)
+    prem_kb.close_omniscience()
+
+    if not prem_kb.is_consistent():
+        return "entailment"
+    elif not hyp_kb.is_consistent():
+        return "non-entailment"
+
+    for rml in hyp_kb.rmls:
+        if not prem_kb.query(rml):
+            if prem_kb.query(neg(rml)):
+                return "inconsistent"
+            else:
+                return "non-entailment"
+    return "entailment"
+
+
+if __name__=='__main__':
+    p = "K(alice,K(bob,p ^ !q))"
+    h1 = "B(bob,p)"
+    h2 = "B(bob,q)"
+    print(is_entailment(p, h1))
+    print(is_entailment(p, h2))
+
+
+#    base = KnowledgeBase.from_string(s)
+#    print(base.formulas, base.agents)
+#    print('---\n\n')
+#    kb = base.to_PDKB(2)
+    #print(kb)   
+#    print(kb.props, kb.agents)
+
+#    kb.close_omniscience() 
+    #kb.logically_close()
+#    print('---\n\n')
+#    print(kb)
