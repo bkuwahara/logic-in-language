@@ -4,10 +4,11 @@ from pdkb.rml import RML, Belief, Possible, Literal, neg
 
 # Superclass for modal operators
 class Modal:
-    def __init__(self, agent, proposition):
+    def __init__(self, agent, proposition, negate=False):
         self.agent = agent
         self.proposition = proposition
-        
+        self.negate=negate
+      
     # Converts a modal operator and all nested premises into a set of 
     # premises (removing any conjunctions)
     def to_set(self):
@@ -32,19 +33,23 @@ class Modal:
 
 class BeliefOperator(Modal):
     def __repr__(self):
-        return f"B({self.agent},{self.proposition})"
+        op = f"B({self.agent},{self.proposition})"
+        return '!' + op if self.negate else op
+
     def to_rml(self):
+        truth_func = neg if self.negate else lambda x: x
         if isinstance(self.proposition, BeliefOperator):
-            return Belief(self.agent, self.proposition.to_rml())
+            return truth_func(Belief(self.agent, self.proposition.to_rml()))
         elif isinstance(self.proposition, KnowledgeOperator):
             raise TypeError("to_rml is only supported for pure belief structures")
         else:
-            return Belief(self.agent, Literal(self.proposition))
+            return truth_func(Belief(self.agent, Literal(self.proposition)))
 
         
 class KnowledgeOperator(Modal):
     def __repr__(self):
-        return f"K({self.agent},{self.proposition})"
+        op = f"K({self.agent},{self.proposition})"
+        return '!' + op if self.negate else op
 
                 
 # Class for conjunctive logical formulae
@@ -91,14 +96,16 @@ def get_modals(input_string):
     for expr in exprs:
         agent, prop = expr.split(',', maxsplit=1)
         idx = input_string.find(f'({expr})')
+        negate = idx-2 >= 0 and input_string[idx-2] == '!'
         op = operators[input_string[idx-1]]
+
         
         # Recurse into proposition to get its structure (if any)
         prop_structure = get_modals(prop)
         if len(prop_structure) < 2:
-            output.append(op(agent, prop_structure[0]))
+            output.append(op(agent, prop_structure[0], negate=negate))
         else:
-            output.append(op(agent, Conjunction(*prop_structure)))
+            output.append(op(agent, Conjunction(*prop_structure),negate=negate))
         
     return output
 
@@ -121,10 +128,10 @@ def to_belief(formula):
     elif isinstance(formula, Conjunction):
         return Conjunction(*[to_belief(p) for p in formula.clauses])
     elif isinstance(formula, BeliefOperator):
-        return BeliefOperator(formula.agent, to_belief(formula.proposition))
+        return BeliefOperator(formula.agent, to_belief(formula.proposition), negate=formula.negate)
     elif isinstance(formula, KnowledgeOperator):
         internal = to_belief(formula.proposition)
-        return Conjunction(BeliefOperator(formula.agent, internal), internal)
+        return Conjunction(BeliefOperator(formula.agent, internal,negate=formula.negate), internal)
     else:
         raise ValueError("formula must be a string or logical type (Conjunction, KnowledgeOperator, or BeliefOperator)")
             
@@ -135,7 +142,6 @@ def to_belief(formula):
 Class for managing database of epistemic logic formulas
 """
 class KnowledgeBase:
-
     # Gets a set of all distinct agents present in a formula
     def extract_agents(formula):
         agents = set()
@@ -199,13 +205,17 @@ class KnowledgeBase:
 def is_entailment(premise, hypothesis, depth=2):
     prem_kb = KnowledgeBase.from_string(premise).to_PDKB(depth)
     hyp_kb = KnowledgeBase.from_string(hypothesis).to_PDKB(depth)
-    prem_kb.close_omniscience()
-
+    
     if not prem_kb.is_consistent():
         return "entailment"
     elif not hyp_kb.is_consistent():
         return "non-entailment"
 
+    prem_kb.logically_close()
+    prem_kb.merge_modalities()
+    hyp_kb.logically_close()
+    hyp_kb.merge_modalities()
+    
     for rml in hyp_kb.rmls:
         if not prem_kb.query(rml):
             if prem_kb.query(neg(rml)):
