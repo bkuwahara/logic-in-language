@@ -130,8 +130,10 @@ def to_belief(formula):
     elif isinstance(formula, BeliefOperator):
         return BeliefOperator(formula.agent, to_belief(formula.proposition), negate=formula.negate)
     elif isinstance(formula, KnowledgeOperator):
+        if formula.negate:
+            raise ValueError("Belief conversion not supported for negated knowledge. This reasoning system does not support disjunction.")
         internal = to_belief(formula.proposition)
-        return Conjunction(BeliefOperator(formula.agent, internal,negate=formula.negate), internal)
+        return Conjunction(BeliefOperator(formula.agent, internal), internal)
     else:
         raise ValueError("formula must be a string or logical type (Conjunction, KnowledgeOperator, or BeliefOperator)")
             
