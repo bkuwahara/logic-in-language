@@ -4,7 +4,8 @@ import os
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from epistemic_logic import KnowledgeBase, is_entailment
 
-os.chdir("/w/339/bkuwahara/csc2542")
+#os.chdir("/w/339/bkuwahara/csc2542")
+os.chdir("/w/246/ikozlov/csc2542-project")
 
 """
 Class for doing inference directly with the model
@@ -14,13 +15,18 @@ token = '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'
 
 class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path, n_shots=3, chain_of_thought=False):
+	def __init__(self, model_path, n_shots=3, chain_of_thought=False, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', use_token=True):
 
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-		offload_state_dict = torch.cuda.is_available()
-
-		tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
-		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
+		offload_state_dict = torch.cuda.is_available() 
+		
+		if use_token: 
+			tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir=cache_dir, token=token)
+			model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir=cache_dir, token=token) 
+		else: 
+			tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir=cache_dir)
+			model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir=cache_dir)
+			
 		self.model = model
 		self.tokenizer = tokenizer
 		self.chain_of_thought = chain_of_thought
@@ -36,6 +42,9 @@ class LlamaBasic:
 		if os.path.isfile(prompt_acts):
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
+			directory = f"./prompts/{model_path}"
+			if not os.path.exists(directory):
+				os.makedirs(directory)
 			input_ids = tokenizer.encode(self.prompt, return_tensors='pt').to(self.device)
 			outputs = model(input_ids, output_hidden_states=True)
 			self.encoded_prompt = outputs.past_key_values
@@ -61,12 +70,17 @@ Class for wrapping an LLM with symbolic epistemic reasoning system
 class LlamaLogical:
 
 	# model: string specifying the model to use, e.g. "13b"
-	def __init__(self, model_path, n_shots=3, chain_of_thought=False):		
+	def __init__(self, model_path, n_shots=3, chain_of_thought=False, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', use_token=True):		
 		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		offload_state_dict = torch.cuda.is_available()
 		
-		tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
-		model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', token=token)
+		if use_token: 
+			tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir=cache_dir, token=token)
+			model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir=cache_dir, token=token)
+		else:
+			tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir=cache_dir)
+			model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto',offload_folder='offload', offload_state_dict=offload_state_dict, cache_dir=cache_dir)
+		
 		self.model = model
 		self.tokenizer = tokenizer
 		self.chain_of_thought=chain_of_thought
@@ -143,10 +157,12 @@ class RandModel:
 
 if __name__ == "__main__":
 	import json
-	path="meta-llama/Llama-2-13b-hf"
+#	path="meta-llama/Llama-2-13b-hf"
+	path="TheBloke/llemma_34b-AWQ"
 #	model = LlamaBasic(path)
 #	model = LlamaLogical(path)
-	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
+#	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
+	model = LlamaBasic(path, chain_of_thought=True, n_shots=3, cache_dir='/w/246/ikozlov/.cache/torch/kernels/', use_token=False)
 #	model = LlamaLogical(path, chain_of_thought=True)
 
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")

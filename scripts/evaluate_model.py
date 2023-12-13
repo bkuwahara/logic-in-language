@@ -7,7 +7,8 @@ from tqdm import tqdm
 import csv
 import argparse
 import tqdm
-os.chdir("/w/339/bkuwahara/csc2542")
+#os.chdir("/w/339/bkuwahara/csc2542")
+os.chdir("/w/246/ikozlov/csc2542-project")
 
 random.seed(2023) # Needed to get same subset of questions each run (running all takes too long)
 
