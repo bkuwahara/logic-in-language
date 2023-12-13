@@ -13,18 +13,18 @@ random.seed(2023) # Needed to get same subset of questions each run (running all
 
 from models import LlamaBasic, LlamaLogical, RandModel
 
-def load_data():
-	with open("./datasets/task.json") as data_file:
+def load_data(dataset):
+	with open(f"./datasets/{dataset}.json") as data_file:
 		data = json.load(data_file)
 
-	prefix = data["task_prefix"]
+#	prefix = data["task_prefix"]
 	questions = data["examples"]
-	return prefix, questions
+	return questions #, prefix
 
 
 
 
-def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
+def evaluate(model_name, chain_of_thought, n_shots, path, dataset, output_dir):
 
 	# Load in the model
 	if model_name == "basic":
@@ -37,8 +37,8 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
 		raise ValueError("Model must be one of basic, logical, or random. Given {}".format(args.model))
 
 	
-	prefix, _questions = load_data()
-	questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
+	questions = load_data(dataset)
+	#questions = random.choices(questions,k=500) # Random sample of 500 questions to save time
 	score = 0
 	num_invalid = 0		
 
@@ -47,7 +47,7 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
 	savedir = f"./{output_dir}/{model_name}/{path}"
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
-	output_file = f"{savedir}/results_{n_shots}shot"
+	output_file = f"{savedir}/{dataset}_{n_shots}shot"
 	if chain_of_thought:
 		output_file += "_cot"
 	output_file += ".csv"
@@ -58,7 +58,7 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir):
 		writer.writerow(header)
 
 	# Loop through questions
-	for i, q in enumerate(questions[::]):
+	for i, q in enumerate(questions):
 		query = q["input"]
 		model_output = model(query, return_full_output=False)
 		#print(i, model_output)
@@ -88,12 +88,13 @@ if __name__ == "__main__":
 		help="The number of examples the model will see in its prompt prior to inference (must have a pre-existing prompt file)")
 	parser.add_argument("--chain_of_thought", default=0, type=int,
 		help="Whether or not to use chain of thought reasoning")
+	parser.add_argument("--dataset", default="task",
+		help="Dataset on which to evaluate (task for basic epistemic, kd45_reasoning for kd45, mixed_reasoning for both")
 
 
 	args = parser.parse_args()
-	print(args.chain_of_thought)
 #	print(args.model, args.output_dir, args.size)
-	acc, inv = evaluate(args.model, args.chain_of_thought, args.n_shots, args.path, args.output_dir)
+	acc, inv = evaluate(args.model, args.chain_of_thought, args.n_shots, args.path, args.dataset, args.output_dir)
 	
 	print(acc,inv)
 

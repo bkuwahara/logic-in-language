@@ -171,8 +171,8 @@ if __name__ == "__main__":
 		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-	questions = random.choices(data["examples"], k=5)
+	questions = random.choices(data["examples"], k=1)
 	
 	for question in questions:
 		q = question["input"]
-		print(model(q, return_full_output=True))
+		print(model(q, return_full_output=False))
