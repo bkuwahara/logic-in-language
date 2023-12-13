@@ -1,9 +1,10 @@
 import torch
 import random
 import os
+import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from epistemic_logic import KnowledgeBase, is_entailment
-
+import argparse
 os.chdir("/w/339/bkuwahara/csc2542")
 
 """
@@ -141,30 +142,37 @@ class RandModel:
 		else:
 			return "I don't understand"
 
-if __name__ == "__main__":
-	import json
-	path="meta-llama/Llama-2-13b-hf"
-#	model = LlamaBasic(path)
-#	model = LlamaLogical(path)
-	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
-#	model = LlamaLogical(path, chain_of_thought=True)
 
-#	model = LlamaLogical("meta-llama/Llama-2-13b-hf")
+def initialize_prompt(model_name, path, chain_of_thought, n_shots):
+	# Load in the model to initialize a prompt
+	if model_name == "basic":
+		model = LlamaBasic(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
+	elif model_name == "logical":
+		model = LlamaLogical(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
+	return model
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="Generate activations for statements in a dataset")
+	parser.add_argument("--model", default="basic",
+		help="The model to use. Options are basic, logical, or random")
+	parser.add_argument("--path", default="meta-llama/Llama-2-13b-hf",
+		help="The path to the LLM to use (huggingface path)")
+	parser.add_argument("--n_shots", default=3, type=int,
+		help="The number of examples the model will see in its prompt prior to inference (must have a pre-existing prompt file)")
+	parser.add_argument("--chain_of_thought", default=0, type=int,
+		help="Whether or not to use chain of thought reasoning")
+
+
+	args = parser.parse_args()
+	model = initialize_prompt(args.model, args.path, args.chain_of_thought, args.n_shots)
 
 	# Test the model on the actual data
 	with open("./datasets/task.json") as data_file:
 		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-	questions = random.choices(data["examples"], k=1)
+	questions = random.choices(data["examples"], k=5)
 	
 	for question in questions:
 		q = question["input"]
-	#	print(q)
-
-		#out = model.convert_to_logic(q,max_new_tokens=100, return_full_output=True)
-	#print("Full model output: "+out)
-	#logic_string = out.split("Answer: ")[-1].split("$$")[1]
-	#print("Isolated logic string: "+logic_string)
-		answer = model(q, return_full_output=False)
-		print(answer)
+		print(model(q, return_full_output=True))
