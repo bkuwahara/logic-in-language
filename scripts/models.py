@@ -54,7 +54,7 @@ class LlamaBasic:
 
 	# prompt: string giving the task prompt for the model to perform inference on
 	def __call__(self, task, return_full_output=False):
-		max_new_tokens = 100 if self.chain_of_thought else 8
+		max_new_tokens = 200 if self.chain_of_thought else 100
 		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]

@@ -14,10 +14,12 @@ random.seed(2023) # Needed to get same subset of questions each run (running all
 from models import LlamaBasic, LlamaLogical, RandModel
 
 def load_data():
-	with open("./datasets/task.json") as data_file:
+	#with open("./datasets/task.json") as data_file:
+	with open("./datasets/mixed_reasoning.json") as data_file:
 		data = json.load(data_file)
 
-	prefix = data["task_prefix"]
+	#prefix = data["task_prefix"]
+	prefix = "Identify the relation between the following premises and hypotheses, choosing from the options 'entailment' or 'non-entailment'.\n"
 	questions = data["examples"]
 	return prefix, questions
 
@@ -38,7 +40,8 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir, cache_dir=
 
 	
 	prefix, _questions = load_data()
-	questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
+	#questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
+	questions = _questions
 	score = 0
 	num_invalid = 0		
 
