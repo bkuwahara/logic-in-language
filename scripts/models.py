@@ -1,11 +1,11 @@
 import torch
 import random
 import os
+import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from epistemic_logic import KnowledgeBase, is_entailment
 
-#os.chdir("/w/339/bkuwahara/csc2542")
-os.chdir("/w/246/ikozlov/csc2542-project")
+os.chdir("/w/339/bkuwahara/csc2542")
 
 """
 Class for doing inference directly with the model
@@ -155,14 +155,21 @@ class RandModel:
 		else:
 			return "I don't understand"
 
+
+def initialize_prompt(model_name, path, chain_of_thought, n_shots):
+	# Load in the model to initialize a prompt
+	if model_name == "basic":
+		model = LlamaBasic(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
+	elif model_name == "logical":
+		model = LlamaLogical(path, chain_of_thought=chain_of_thought, n_shots=n_shots)
+	return model
+
 if __name__ == "__main__":
 	import json
-#	path="meta-llama/Llama-2-13b-hf"
-	path="TheBloke/llemma_34b-AWQ"
+	path="meta-llama/Llama-2-13b-hf"
 #	model = LlamaBasic(path)
 #	model = LlamaLogical(path)
-#	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
-	model = LlamaBasic(path, chain_of_thought=True, n_shots=3, cache_dir='/w/246/ikozlov/.cache/torch/kernels/', use_token=False)
+	model = LlamaBasic(path, chain_of_thought=True, n_shots=3)
 #	model = LlamaLogical(path, chain_of_thought=True)
 
 #	model = LlamaLogical("meta-llama/Llama-2-13b-hf")

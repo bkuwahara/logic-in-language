@@ -13,20 +13,19 @@ random.seed(2023) # Needed to get same subset of questions each run (running all
 
 from models import LlamaBasic, LlamaLogical, RandModel
 
-def load_data():
+def load_data(dataset):
 	#with open("./datasets/task.json") as data_file:
-	with open("./datasets/mixed_reasoning.json") as data_file:
+	with open(f"./datasets/{dataset}.json") as data_file:
 		data = json.load(data_file)
 
-	#prefix = data["task_prefix"]
-	prefix = "Identify the relation between the following premises and hypotheses, choosing from the options 'entailment' or 'non-entailment'.\n"
+#	prefix = data["task_prefix"]
 	questions = data["examples"]
-	return prefix, questions
+	return questions #,prefix 
 
 
 
 
-def evaluate(model_name, chain_of_thought, n_shots, path, output_dir, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', use_token=True):
+def evaluate(model_name, chain_of_thought, n_shots, path, dataset, output_dir, cache_dir='/w/339/bkuwahara/.cache/torch/kernels/', use_token=True):
 
 	# Load in the model
 	if model_name == "basic":
@@ -39,9 +38,8 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir, cache_dir=
 		raise ValueError("Model must be one of basic, logical, or random. Given {}".format(args.model))
 
 	
-	prefix, _questions = load_data()
+	questions = load_data(dataset)
 	#questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
-	questions = _questions
 	score = 0
 	num_invalid = 0		
 
@@ -50,7 +48,7 @@ def evaluate(model_name, chain_of_thought, n_shots, path, output_dir, cache_dir=
 	savedir = f"./{output_dir}/{model_name}/{path}"
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
-	output_file = f"{savedir}/results_{n_shots}shot"
+	output_file = f"{savedir}/{dataset}_{n_shots}shot"
 	if chain_of_thought:
 		output_file += "_cot"
 	output_file += ".csv"
@@ -91,6 +89,8 @@ if __name__ == "__main__":
 		help="The number of examples the model will see in its prompt prior to inference (must have a pre-existing prompt file)")
 	parser.add_argument("--chain_of_thought", default=0, type=int,
 		help="Whether or not to use chain of thought reasoning")
+	parser.add_argument("--dataset", default="task",
+		help="Dataset on which to evaluate (task for basic epistemic, kd45_reasoning for kd45, mixed_reasoning for both")
 	parser.add_argument("--cache_dir", default='/w/339/bkuwahara/.cache/torch/kernels/',
 		help="Directory for storing cache files during program execution.")
 	parser.add_argument("--use_token", default=True, type=bool,
