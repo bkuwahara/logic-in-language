@@ -5,7 +5,8 @@ import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from epistemic_logic import KnowledgeBase, is_entailment
 
-os.chdir("/w/339/bkuwahara/csc2542")
+#os.chdir("/w/339/bkuwahara/csc2542")
+os.chdir("/w/246/ikozlov/csc2542-project")
 
 """
 Class for doing inference directly with the model
@@ -104,7 +105,7 @@ class LlamaLogical:
 	# Gets the model's prediction for a given problem
 	# task: string specifying the inference task
 	def __call__(self, task, return_full_output=False):
-		max_new_tokens = 150
+		max_new_tokens = 100
 		input = self.tokenizer(self.prompt+'\n'+task, return_tensors="pt").to(self.device)
 		generate_ids = self.model.generate(**input, max_new_tokens=max_new_tokens, past_key_values=self.encoded_prompt)
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
