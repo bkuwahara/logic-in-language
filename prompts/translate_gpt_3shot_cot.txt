@@ -1,4 +1,4 @@
-Translate each of the following premises and hypotheses into Epistemic logic notation. Use $$B(A,p)$$ to denote that A believes p, $$K(A,p)$$ to denote that A knows p, p ^ q to denote p and q, and !p to denote not p. Think step by step.
+The following examples may be used if you wish to translate the given premise and hypothesis into epistemic logic notation. Use $$B(Agent,p)$$ to denote that Agent believes p and $$K(Agent,p)$$ to denote that Agent knows p. Use p ^ q to denote p and q.
 
 Premise: Evelyn suspects that Joseph understands that a young woman and an older man are painting ceramics. Hypothesis: Ava understands that Emma suspects that a person with braided hair covers his mouth. 
 Reasoning: Reasoning: Let p be the event that a young woman and an older man are painting ceramics and q be the event that a person with braided hair covers his mouth. The premise is that Evelyn believes that Joseph knows p. The hypothesis is that Ava knows that Emma believes q.

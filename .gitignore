@@ -4,6 +4,7 @@ shells
 scripts/offload
 venv
 results
+*.env
 *.save
 *.svn
 *.pt
