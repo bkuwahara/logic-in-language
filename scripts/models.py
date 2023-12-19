@@ -11,7 +11,7 @@ os.chdir("/w/339/bkuwahara/csc2542")
 Class for doing inference directly with the model
 """
 
-token = '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'
+token = None # your huggingface token here 
 
 class LlamaBasic:
 	# model: string specifying the model to use, e.g. "13b"
