@@ -33,7 +33,10 @@ class LlamaBasic:
 			self.prompt=prompt
 
 
-		prompt_acts = f"./prompts/{model_path}/{prompt_name}.pt"
+		prompt_dir = f"./prompts/{model_path}"
+		if not os.path.isdir(prompt_dir):
+			os.mkdirs(prompt_dir)
+		prompt_acts = f"{prompt_dir}/{prompt_name}.pt"
 		if os.path.isfile(prompt_acts):
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
@@ -77,8 +80,10 @@ class LlamaLogical:
 			prompt = f.read()
 			self.prompt=prompt
 
-
-		prompt_acts = f"./prompts/{model_path}/{prompt_name}.pt"
+		prompt_dir = f"./prompts/{model_path}"
+		if not os.path.isdir(prompt_dir):
+			os.mkdirs(prompt_dir)
+		prompt_acts = f"{prompt_dir}/{prompt_name}.pt"
 		if os.path.isfile(prompt_acts):
 			self.encoded_prompt = torch.load(prompt_acts)
 		else:
@@ -97,7 +102,7 @@ class LlamaLogical:
 		model_output = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True)[0]
 
 		if return_full_output:
-			return model_output
+			return model_output[len(self.prompt):]
 		else:
 			try:
 				_p, _h = model_output.split("Translated premise: ")[-1].split("Translated hypothesis: ")
@@ -171,8 +176,8 @@ if __name__ == "__main__":
 		data = json.load(data_file)
 
 	#prefix = data["task_prefix"]
-	questions = random.choices(data["examples"], k=1)
+	questions = random.choices(data["examples"], k=5)
 	
 	for question in questions:
 		q = question["input"]
-		print(model(q, return_full_output=False))
+		print(model(q, return_full_output=True))

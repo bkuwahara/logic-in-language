@@ -9,8 +9,8 @@ class Modal:
         self.proposition = proposition
         self.negate=negate
       
-    # Converts a modal operator and all nested premises into a set of 
-    # premises (removing any conjunctions)
+    # Converts a modal operator and all nested premises into a set of
+    #    premises (removing any conjunctions)
     def to_set(self):
         modals = {self}
         if isinstance(self.proposition, Conjunction):
@@ -31,11 +31,15 @@ class Modal:
         return str(self) == str(other)
         
 
+"""
+Belief operator class (inherits from Modal)
+"""
 class BeliefOperator(Modal):
     def __repr__(self):
         op = f"B({self.agent},{self.proposition})"
         return '!' + op if self.negate else op
 
+    # returns an equivalent rml object from pdkb module
     def to_rml(self):
         truth_func = neg if self.negate else lambda x: x
         if isinstance(self.proposition, BeliefOperator):
@@ -45,7 +49,9 @@ class BeliefOperator(Modal):
         else:
             return truth_func(Belief(self.agent, Literal(self.proposition)))
 
-        
+"""
+Knowledge operator class (inherits from Modal)
+"""        
 class KnowledgeOperator(Modal):
     def __repr__(self):
         op = f"K({self.agent},{self.proposition})"
@@ -72,7 +78,8 @@ class Conjunction:
                 output.add(clause)
                 
         return output
-    
+
+# Returns a list of contents of the outermost level of belief/knowledge operators
 def extract_outer_layers(input_string):
     pattern = r"[KB]\("
 
@@ -212,6 +219,7 @@ class KnowledgeBase:
             return hypothesis in self.formulas
         return hypothesis.issubset(self.formulas)
     
+    # Returns a PDKB object from pdkb module
     def to_PDKB(self, depth):
         def extract_literal(formula):
             if hasattr(formula, "proposition"):
@@ -233,7 +241,7 @@ class KnowledgeBase:
                 kb.add_rml(f.to_rml())
         return kb
 
-
+# Determines if a premise string entails a hypothesis string
 def is_entailment(premise, hypothesis, depth=2):
     prem_kb = KnowledgeBase.from_string(premise).to_PDKB(depth)
     hyp_kb = KnowledgeBase.from_string(hypothesis).to_PDKB(depth)
