@@ -14,14 +14,12 @@ random.seed(2023) # Needed to get same subset of questions each run (running all
 from models import LlamaBasic, LlamaLogical, RandModel
 
 def load_data(dataset):
-	#with open("./datasets/task.json") as data_file:
 	with open(f"./datasets/{dataset}.json") as data_file:
 		data = json.load(data_file)
 
-	#prefix = data["task_prefix"]
-	#prefix = "Identify the relation between the following premises and hypotheses, choosing from the options 'entailment' or 'non-entailment'.\n"
+#	prefix = data["task_prefix"]
 	questions = data["examples"]
-	return questions
+	return questions #, prefix
 
 
 
@@ -40,10 +38,10 @@ def evaluate(model_name, chain_of_thought, n_shots, path, dataset, output_dir, c
 
 	
 	questions = load_data(dataset)
-	#questions = random.choices(_questions, k=500) # Random sample of 500 questions to save time
+	#questions = random.choices(questions,k=500) # Random sample of 500 questions to save time
+
 	score = 0
 	num_invalid = 0		
-
 
 	# Set up output file for data
 	savedir = f"./{output_dir}/{model_name}/{path}"
@@ -99,7 +97,6 @@ if __name__ == "__main__":
 
 
 	args = parser.parse_args()
-	print(args.chain_of_thought)
 #	print(args.model, args.output_dir, args.size)
 	acc, inv = evaluate(args.model, args.chain_of_thought, args.n_shots, args.path, args.dataset, args.output_dir, cache_dir=args.cache_dir, use_token=args.use_token)
 	

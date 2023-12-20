@@ -1,4 +1,4 @@
-Translate each of the following premises and hypotheses into Epistemic logic notation. Use $$B(Agent,p)$$ to denote that Agent believes p and $$K(Agent,p)$$ to denote that Agent knows p. Use p ^ q to denote p and q. Think step by step.
+Translate each of the following premises and hypotheses into Epistemic logic notation. Use $$B(A,p)$$ to denote that Agent believes p, $$K(A,p)$$ to denote that A knows p, p ^ q to denote p and q, and !p to denote not p. Think step by step.
 
 Premise: James remembers that Michael believes that a man is walking past a large sign that says E.S.E. Electronics. Hypothesis: Michael believes that a man is walking past a large sign that says E.S.E. Electronics.
 Reasoning: Let p be the proposition that a man is walking past a large sign that says E.S.E. Electronics. The premise is that James knows that Michael believes p. The hypothesis is that Michael believes p.

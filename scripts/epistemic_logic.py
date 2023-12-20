@@ -9,8 +9,8 @@ class Modal:
         self.proposition = proposition
         self.negate=negate
       
-    # Converts a modal operator and all nested premises into a set of 
-    # premises (removing any conjunctions)
+    # Converts a modal operator and all nested premises into a set of
+    #    premises (removing any conjunctions)
     def to_set(self):
         modals = {self}
         if isinstance(self.proposition, Conjunction):
@@ -31,11 +31,15 @@ class Modal:
         return str(self) == str(other)
         
 
+"""
+Belief operator class (inherits from Modal)
+"""
 class BeliefOperator(Modal):
     def __repr__(self):
         op = f"B({self.agent},{self.proposition})"
         return '!' + op if self.negate else op
 
+    # returns an equivalent rml object from pdkb module
     def to_rml(self):
         truth_func = neg if self.negate else lambda x: x
         if isinstance(self.proposition, BeliefOperator):
@@ -45,7 +49,9 @@ class BeliefOperator(Modal):
         else:
             return truth_func(Belief(self.agent, Literal(self.proposition)))
 
-        
+"""
+Knowledge operator class (inherits from Modal)
+"""        
 class KnowledgeOperator(Modal):
     def __repr__(self):
         op = f"K({self.agent},{self.proposition})"
@@ -72,9 +78,34 @@ class Conjunction:
                 output.add(clause)
                 
         return output
-    
 
+# Returns a list of contents of the outermost level of belief/knowledge operators
+def extract_outer_layers(input_string):
+    pattern = r"[KB]\("
 
+    matches = re.finditer(pattern, input_string)
+    bracket_starts = [match.start()+1 for match in matches]
+
+    bracket_ends = []
+    for start in bracket_starts:
+        n_open = 1
+        for (i, c) in enumerate(input_string[start+1:]):
+            if c == '(':
+                n_open += 1
+            elif c == ')':
+                n_open -= 1
+            if not n_open:
+                bracket_ends.append(i+start+1)
+                break
+
+    outer_layers = []
+    prev_stop = 0
+    for (start, end) in zip(bracket_starts, bracket_ends):
+        if start >= prev_stop:
+            outer_layers.append((start,end))
+            prev_stop = end
+
+    return list(map(lambda endpoints: input_string[endpoints[0]+1:endpoints[1]], outer_layers))
 
 
 # Finds all independent (non-nested) modal operators in an input string
@@ -83,8 +114,8 @@ def get_modals(input_string):
     operators = {"K" : KnowledgeOperator, "B" : BeliefOperator}
     output = []
     
-    _exprs = re.findall('[KB]\(([^)]+)', input_string)
-    if not _exprs:
+    exprs = extract_outer_layers(input_string)
+    if not exprs:
         # check if conjunction of literals
         props = input_string.split(" ^ ")
         if len(props) == 1:
@@ -92,7 +123,6 @@ def get_modals(input_string):
         else:
             return [Conjunction(*props)]
     
-    exprs = [x + ')'*x.count('(') for x in _exprs]
     for expr in exprs:
         agent, prop = expr.split(',', maxsplit=1)
         idx = input_string.find(f'({expr})')
@@ -161,15 +191,22 @@ class KnowledgeBase:
         self.formulas = set()
         agents = set()
         for formula in formulas:
-            f_agents = KnowledgeBase.extract_agents(formula)
-            formula = to_belief(formula)
-            agents = agents.union(f_agents)
-            self.formulas = self.formulas.union(formula.to_set())
+            if isinstance(formula, str):
+                self.formulas.add(formula)
+            else:
+                f_agents = KnowledgeBase.extract_agents(formula)
+                formula = to_belief(formula)
+                agents = agents.union(f_agents)
+                self.formulas = self.formulas.union(formula.to_set())
         self.agents = agents
         
     # Initializes a KnowledgeBase from a string representing epistemic logic
     def from_string(input_string):
-        return KnowledgeBase(to_logic(input_string).to_set())
+        logic = to_logic(input_string)
+        if isinstance(logic, str):
+            return KnowledgeBase([logic])
+        else:
+            return KnowledgeBase(logic.to_set())
     
     # Decides if the formulas contained in the KnowledgeBase object entail
     # the formula(s) in hypothesis
@@ -182,6 +219,7 @@ class KnowledgeBase:
             return hypothesis in self.formulas
         return hypothesis.issubset(self.formulas)
     
+    # Returns a PDKB object from pdkb module
     def to_PDKB(self, depth):
         def extract_literal(formula):
             if hasattr(formula, "proposition"):
@@ -203,7 +241,7 @@ class KnowledgeBase:
                 kb.add_rml(f.to_rml())
         return kb
 
-
+# Determines if a premise string entails a hypothesis string
 def is_entailment(premise, hypothesis, depth=2):
     prem_kb = KnowledgeBase.from_string(premise).to_PDKB(depth)
     hyp_kb = KnowledgeBase.from_string(hypothesis).to_PDKB(depth)
@@ -228,13 +266,13 @@ def is_entailment(premise, hypothesis, depth=2):
 
 
 if __name__=='__main__':
-    p = "K(alice,K(bob,p ^ !q))"
-    h1 = "B(bob,p)"
-    h2 = "B(bob,q)"
-    print(is_entailment(p, h1))
-    print(is_entailment(p, h2))
-
-
+    #p = "K(alice,K(bob,p ^ !q))"
+    #h1 = "B(bob,p)"
+    #h2 = "B(bob,q)"
+    #print(is_entailment(p, h1))
+    #print(is_entailment(p, h2))
+    prem = "B(Richard,K(Michael,p) ^ K(Michael,q))"
+    print(is_entailment(prem, "B(Richard,q)"))
 #    base = KnowledgeBase.from_string(s)
 #    print(base.formulas, base.agents)
 #    print('---\n\n')
