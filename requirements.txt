@@ -63,3 +63,6 @@ triton==2.1.0
 typing_extensions==4.8.0
 tzdata==2023.3
 urllib3==2.1.0
+ipykernel=6.25.0
+jupyter=1.0.0
+openai=1.5.0=pypi_0
